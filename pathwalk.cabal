@@ -1,5 +1,5 @@
 name:                pathwalk
-version:             0.1.0.0
+version:             0.1.1.0
 synopsis:            Path walking utilities for Haskell programs
 description:         Simple directory tree walking utilities.
 license:             PublicDomain
@@ -15,7 +15,7 @@ source-repository head
     location: https://github.com/Xe/pathwalk
 
 library
-  exposed-modules:     Within.PathWalk
+  exposed-modules:     System.Directory.PathWalk
   build-depends:       base >=4.6 && <4.7, directory >=1.2 && <1.3, filepath >=1.3 && <1.4
   hs-source-dirs:      src
   default-language:    Haskell2010

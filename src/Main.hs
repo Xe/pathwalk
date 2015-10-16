@@ -1,7 +1,7 @@
 module Main where
 
 import Data.List (intercalate)
-import Within.PathWalk (pathWalk)
+import System.Directory.PathWalk (pathWalk)
 
 main :: IO ()
 main = do

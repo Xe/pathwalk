@@ -7,7 +7,7 @@ Some really simple path walking tools and utilities for Haskell.
 module Main where
 
 import Data.List (intercalate)
-import Within.PathWalk (pathWalk)
+import System.Directory.PathWalk (pathWalk)
 
 main :: IO ()
 main =
