@@ -1,8 +1,8 @@
 name:                pathwalk
-version:             0.1.1.0
+version:             0.1.1.1
 synopsis:            Path walking utilities for Haskell programs
 description:         Simple directory tree walking utilities.
-license:             PublicDomain
+license:             MIT
 license-file:        LICENSE
 author:              Christine Dodrill
 maintainer:          xena@yolo-swag.com
