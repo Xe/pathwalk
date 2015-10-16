@@ -1,4 +1,4 @@
-module PathWalk where
+module Within.PathWalk where
 
 import Control.Monad (forM_)
 import Data.IORef (newIORef, readIORef, writeIORef)
