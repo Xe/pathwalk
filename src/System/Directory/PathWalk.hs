@@ -1,33 +1,32 @@
-module Within.PathWalk where
+module System.Directory.PathWalk
+    ( pathWalk
+    ) where
 
-import Control.Monad (forM_)
+import Control.Monad (forM_, filterM)
 import Data.IORef (newIORef, readIORef, writeIORef)
-import System.Directory (doesDirectoryExist, getDirectoryContents)
+import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import System.FilePath ((</>))
 
+-- | 'pathWalk' recursively enumerates the given root directory,
+-- calling callback once per directory with the traversed directory name, a list of subdirectories, and a list of files.
+--
+-- The subdirectories and file names are always relative to the root given.
+--
+-- @
+-- pathWalk "src" $ \\dir subdirs files -> do
+--   forM_ files $ \\file -> do
+--     when ("Test.hs" \`isSuffixOf\` file) $ do
+--       registerTestFile $ dir \</\> file
+-- @
 pathWalk :: FilePath -> (FilePath -> [FilePath] -> [FilePath] -> IO ()) -> IO ()
 pathWalk root callback = do
-    dirs  <- newIORef ([] :: [FilePath])
-    files <- newIORef ([] :: [FilePath])
     names <- getDirectoryContents root
     let properNames = filter (`notElem` [".", ".."]) names
 
-    forM_ properNames $ \name -> do
-        isDir <- doesDirectoryExist $ root </> name
+    dirs <- filterM (\n -> doesDirectoryExist $ root </> n) names
+    files <- filterM (\n -> doesFileExist $ root </> n) names
 
-        case isDir of
-            True -> do
-                val <- readIORef dirs
-                writeIORef dirs $ val ++ [name]
-            False -> do
-                val <- readIORef files
-                writeIORef files $ val ++ [name]
+    callback root dirs files
 
-    cbDirs  <- readIORef dirs
-    cbFiles <- readIORef files
-
-    callback root cbDirs cbFiles
-
-    forM_ cbDirs $ \dir -> do
-        let newPath = root </> dir
-        pathWalk newPath callback
+    forM_ dirs $ \dir -> do
+        pathWalk (root </> dir) callback
