@@ -4,13 +4,20 @@ pathwalk
 Some really simple path walking tools and utilities for Haskell.
 
 ```haskell
-module Main where
+module Main (main) where
 
+import Control.Monad (forM_)
 import Data.List (intercalate)
 import System.Directory.PathWalk (pathWalk)
+import System.Environment (getArgs)
 
 main :: IO ()
-main =
-    pathWalk "./foo" $ \x y z ->
-        putStrLn $ intercalate " " [(show x), (show y), (show z)]
+main = do
+  rawArgs <- getArgs
+  let args = if rawArgs == [] then ["."] else rawArgs
+  forM_ args $ \arg -> do
+    pathWalk arg $ \root dirs files -> do
+      putStrLn root
+      putStrLn $ "  dirs: " ++ show dirs
+      putStrLn $ "  files: " ++ show files
 ```
