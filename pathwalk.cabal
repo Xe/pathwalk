@@ -1,5 +1,5 @@
 name:                pathwalk
-version:             0.1.1.1
+version:             0.2.0.0
 synopsis:            Path walking utilities for Haskell programs
 description:         Simple directory tree walking utilities.
 license:             MIT
