@@ -8,6 +8,7 @@ module System.Directory.PathWalk
     ) where
 
 import Control.Monad (forM_, filterM)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import System.FilePath ((</>))
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
@@ -16,7 +17,7 @@ import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 -- list of file names.  If using 'pathWalk', the callback always
 -- returns '()'.  If using 'pathWalkInterruptible', it returns whether
 -- to continue, prevent recursing further, or stop traversal entirely.
-type Callback a = FilePath -> [FilePath] -> [FilePath] -> IO a
+type Callback m a = FilePath -> [FilePath] -> [FilePath] -> m a
 
 -- | 'pathWalk' recursively enumerates the given root directory,
 -- calling callback once per directory with the traversed directory
@@ -31,7 +32,7 @@ type Callback a = FilePath -> [FilePath] -> [FilePath] -> IO a
 --     when ("Test.hs" \`isSuffixOf\` file) $ do
 --       registerTestFile $ dir \</\> file
 -- @
-pathWalk :: FilePath -> Callback () -> IO ()
+pathWalk :: MonadIO m => FilePath -> Callback m () -> m ()
 pathWalk root callback = do
   pathWalkInterruptible root $ \dir dirs files -> do
     callback dir dirs files
@@ -45,13 +46,13 @@ data WalkStatus
   | Stop -- ^ Stop recursing entirely.
   deriving (Show, Eq)
 
-pathWalkInternal :: FilePath -> Callback WalkStatus -> IO (Maybe ())
+pathWalkInternal :: MonadIO m => FilePath -> Callback m WalkStatus -> m (Maybe ())
 pathWalkInternal root callback = do
-  names <- getDirectoryContents root
+  names <- liftIO $ getDirectoryContents root
   let properNames = filter (`notElem` [".", ".."]) names
 
-  dirs <- filterM (\n -> doesDirectoryExist $ root </> n) properNames
-  files <- filterM (\n -> doesFileExist $ root </> n) properNames
+  dirs <- filterM (\n -> liftIO $ doesDirectoryExist $ root </> n) properNames
+  files <- filterM (\n -> liftIO $ doesFileExist $ root </> n) properNames
 
   result <- callback root dirs files
   case result of
@@ -67,7 +68,7 @@ pathWalkInternal root callback = do
 -- | Traverses a directory tree, just like 'pathWalk', except that
 -- the callback can determine whether to continue traversal.  See
 -- 'WalkStatus'.
-pathWalkInterruptible :: FilePath -> Callback WalkStatus -> IO ()
+pathWalkInterruptible :: MonadIO m => FilePath -> Callback m WalkStatus -> m ()
 pathWalkInterruptible root callback = do
   _ <- pathWalkInternal root callback
   return ()
