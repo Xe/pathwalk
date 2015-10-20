@@ -1,3 +1,5 @@
+-- | Provides path traversal functions much like Python's os.walk.
+
 module System.Directory.PathWalk
     ( Callback
     , pathWalk
@@ -10,12 +12,18 @@ import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents
 import System.FilePath ((</>))
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 
+-- | Called with a directory, list of relative subdirectories, and a
+-- list of file names.  If using 'pathWalk', the callback always
+-- returns '()'.  If using 'pathWalkInterruptible', it returns whether
+-- to continue, prevent recursing further, or stop traversal entirely.
 type Callback a = FilePath -> [FilePath] -> [FilePath] -> IO a
 
 -- | 'pathWalk' recursively enumerates the given root directory,
--- calling callback once per directory with the traversed directory name, a list of subdirectories, and a list of files.
+-- calling callback once per directory with the traversed directory
+-- name, a list of subdirectories, and a list of files.
 --
--- The subdirectories and file names are always relative to the root given.
+-- The subdirectories and file names are always relative to the root
+-- given.
 --
 -- @
 -- pathWalk "src" $ \\dir subdirs files -> do
@@ -29,10 +37,14 @@ pathWalk root callback = do
     callback dir dirs files
     return Continue
 
-data WalkStatus = Continue | StopRecursing | Stop
+-- | The callback given to 'pathWalkInterruptible' returns a WalkStatus
+-- which determines which subsequent directories are traversed.
+data WalkStatus
+  = Continue -- ^ Continue recursing all subdirectories.
+  | StopRecursing -- ^ Do not traverse deeper.
+  | Stop -- ^ Stop recursing entirely.
+  deriving (Show, Eq)
 
--- this will never return StopRecursing but I didn't want to create a new data
--- type for that
 pathWalkInternal :: FilePath -> Callback WalkStatus -> IO (Maybe ())
 pathWalkInternal root callback = do
   names <- getDirectoryContents root
@@ -52,6 +64,9 @@ pathWalkInternal root callback = do
     Stop -> do
       return Nothing
 
+-- | Traverses a directory tree, just like 'pathWalk', except that
+-- the callback can determine whether to continue traversal.  See
+-- 'WalkStatus'.
 pathWalkInterruptible :: FilePath -> Callback WalkStatus -> IO ()
 pathWalkInterruptible root callback = do
   _ <- pathWalkInternal root callback
