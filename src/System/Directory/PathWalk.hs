@@ -5,13 +5,15 @@ module System.Directory.PathWalk
     , pathWalk
     , WalkStatus(..)
     , pathWalkInterruptible
+    , pathWalkLazy
     ) where
 
-import Control.Monad (forM_, filterM)
+import Control.Monad (forM, forM_, filterM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import System.FilePath ((</>))
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import System.IO.Unsafe (unsafeInterleaveIO)
 
 -- | Called with a directory, list of relative subdirectories, and a
 -- list of file names.  If using 'pathWalk', the callback always
@@ -46,13 +48,19 @@ data WalkStatus
   | Stop -- ^ Stop recursing entirely.
   deriving (Show, Eq)
 
-pathWalkInternal :: MonadIO m => FilePath -> Callback m WalkStatus -> m (Maybe ())
-pathWalkInternal root callback = do
-  names <- liftIO $ getDirectoryContents root
+readDirsAndFiles :: FilePath -> IO ([FilePath], [FilePath])
+readDirsAndFiles root = do
+  names <- getDirectoryContents root
   let properNames = filter (`notElem` [".", ".."]) names
 
-  dirs <- filterM (\n -> liftIO $ doesDirectoryExist $ root </> n) properNames
-  files <- filterM (\n -> liftIO $ doesFileExist $ root </> n) properNames
+  dirs <- filterM (\n -> doesDirectoryExist $ root </> n) properNames
+  files <- filterM (\n -> doesFileExist $ root </> n) properNames
+  
+  return (dirs, files)
+
+pathWalkInternal :: MonadIO m => FilePath -> Callback m WalkStatus -> m (Maybe ())
+pathWalkInternal root callback = do
+  (dirs, files) <- liftIO $ readDirsAndFiles root
 
   result <- callback root dirs files
   case result of
@@ -72,3 +80,21 @@ pathWalkInterruptible :: MonadIO m => FilePath -> Callback m WalkStatus -> m ()
 pathWalkInterruptible root callback = do
   _ <- pathWalkInternal root callback
   return ()
+
+-- | The lazy version of 'pathWalk'.  Instead of running a callback
+-- per directory, it returns a lazy list that reads from the
+-- filesystem as the list is evaluated.
+--
+-- 'pathWalkLazy' does not allow selective recursion.  For richer
+-- functionality, see the directory-tree package at
+-- https://hackage.haskell.org/package/directory-tree
+pathWalkLazy :: MonadIO m => FilePath -> m [(FilePath, [FilePath], [FilePath])]
+pathWalkLazy root = liftIO $ unsafeInterleaveIO $ do
+  (dirs, files) <- readDirsAndFiles root
+
+  next <- unsafeInterleaveIO $ do
+    allsubs <- forM dirs $ \dir -> do
+      pathWalkLazy $ root </> dir
+    return $ concat allsubs
+    
+  return $ (root, dirs, files) : next
