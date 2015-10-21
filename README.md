@@ -7,7 +7,6 @@ Some really simple path walking tools and utilities for Haskell.
 module Main (main) where
 
 import Control.Monad (forM_)
-import Data.List (intercalate)
 import System.Directory.PathWalk (pathWalk)
 import System.Environment (getArgs)
 
