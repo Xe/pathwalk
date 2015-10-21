@@ -44,21 +44,24 @@ library
   default-language: Haskell2010
   ghc-options: -Wall
 
-test example
+test-suite basic
+  type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends: base, pathwalk
-  hs-source-dirs: examples/example
+  hs-source-dirs: examples/basic
   default-language: Haskell2010
   ghc-options: -Wall
 
-test stoprecursing
+test-suite stoprecursing
+  type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends: base, pathwalk
   hs-source-dirs: examples/stoprecursing
   default-language: Haskell2010
   ghc-options: -Wall
 
-test lazy
+test-suite lazy
+  type: exitcode-stdio-1.0
   main-is: Main.hs
   build-depends: base, pathwalk
   hs-source-dirs: examples/lazy
