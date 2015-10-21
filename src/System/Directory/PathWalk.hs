@@ -5,14 +5,17 @@ module System.Directory.PathWalk
     , pathWalk
     , WalkStatus(..)
     , pathWalkInterruptible
+    , pathWalkAccumulate
     , pathWalkLazy
     ) where
 
 import Control.Monad (forM, forM_, filterM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Writer.Lazy (runWriterT, tell)
 import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import System.FilePath ((</>))
-import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
 import System.IO.Unsafe (unsafeInterleaveIO)
 
 -- | Called with a directory, list of relative subdirectories, and a
@@ -81,6 +84,20 @@ pathWalkInterruptible root callback = do
   _ <- pathWalkInternal root callback
   return ()
 
+
+-- | Traverses a directory tree, just like 'pathWalk'.  The difference
+-- is that each callback returns a 'Monoid' value, all of which are
+-- accumulated into the result.  Note that this uses 'WriterT' and
+-- thus frequently appends to the right of the monoid.  Be careful to
+-- avoid accidental quadratic behavior by using a data structure that
+-- supports fast appends.  For example, use Data.Sequence instead of a
+-- list.
+pathWalkAccumulate :: (MonadIO m, Monoid o) => FilePath -> Callback m o -> m o
+pathWalkAccumulate root callback = fmap snd $ runWriterT $ do
+    pathWalk root $ \dir dirs files -> do
+        r <- lift $ callback dir dirs files
+        tell r
+
 -- | The lazy version of 'pathWalk'.  Instead of running a callback
 -- per directory, it returns a lazy list that reads from the
 -- filesystem as the list is evaluated.
@@ -98,3 +115,4 @@ pathWalkLazy root = liftIO $ unsafeInterleaveIO $ do
     return $ concat allsubs
     
   return $ (root, dirs, files) : next
+

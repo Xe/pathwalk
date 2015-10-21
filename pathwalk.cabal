@@ -60,6 +60,14 @@ test-suite stoprecursing
   default-language: Haskell2010
   ghc-options: -Wall
 
+test-suite accumulate
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  build-depends: base, pathwalk
+  hs-source-dirs: examples/accumulate
+  default-language: Haskell2010
+  ghc-options: -Wall
+
 test-suite lazy
   type: exitcode-stdio-1.0
   main-is: Main.hs
