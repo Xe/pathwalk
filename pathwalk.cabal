@@ -1,5 +1,5 @@
 name:                pathwalk
-version:             0.2.1.0
+version:             0.3.0.0
 synopsis:            Path walking utilities for Haskell programs
 description:         Simple directory tree walking utilities.
 license:             MIT
@@ -44,21 +44,21 @@ library
   default-language: Haskell2010
   ghc-options: -Wall
 
-executable example
+test example
   main-is: Main.hs
   build-depends: base, pathwalk
   hs-source-dirs: examples/example
   default-language: Haskell2010
   ghc-options: -Wall
 
-executable stoprecursing
+test stoprecursing
   main-is: Main.hs
   build-depends: base, pathwalk
   hs-source-dirs: examples/stoprecursing
   default-language: Haskell2010
   ghc-options: -Wall
 
-executable lazy
+test lazy
   main-is: Main.hs
   build-depends: base, pathwalk
   hs-source-dirs: examples/lazy
