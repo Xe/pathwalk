@@ -94,9 +94,9 @@ pathWalkInterruptible root callback = do
 -- list.
 pathWalkAccumulate :: (MonadIO m, Monoid o) => FilePath -> Callback m o -> m o
 pathWalkAccumulate root callback = fmap snd $ runWriterT $ do
-    pathWalk root $ \dir dirs files -> do
-        r <- lift $ callback dir dirs files
-        tell r
+  pathWalk root $ \dir dirs files -> do
+    r <- lift $ callback dir dirs files
+    tell r
 
 -- | The lazy version of 'pathWalk'.  Instead of running a callback
 -- per directory, it returns a lazy list that reads from the
