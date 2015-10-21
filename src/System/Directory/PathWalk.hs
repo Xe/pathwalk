@@ -93,10 +93,12 @@ pathWalkInterruptible root callback = do
 -- supports fast appends.  For example, use Data.Sequence instead of a
 -- list.
 pathWalkAccumulate :: (MonadIO m, Monoid o) => FilePath -> Callback m o -> m o
-pathWalkAccumulate root callback = fmap snd $ runWriterT $ do
-  pathWalk root $ \dir dirs files -> do
-    r <- lift $ callback dir dirs files
-    tell r
+pathWalkAccumulate root callback = do
+  ((), result) <- runWriterT $ do
+    pathWalk root $ \dir dirs files -> do
+      r <- lift $ callback dir dirs files
+      tell r
+  return result
 
 -- | The lazy version of 'pathWalk'.  Instead of running a callback
 -- per directory, it returns a lazy list that reads from the
