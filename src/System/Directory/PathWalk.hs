@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- | Provides path traversal functions much like Python's os.walk.
 
 module System.Directory.PathWalk
@@ -9,6 +10,9 @@ module System.Directory.PathWalk
     , pathWalkLazy
     ) where
 
+#if __GLASGOW_HASKELL__ < 710
+import Data.Monoid (Monoid)
+#endif
 import Control.Monad (forM, forM_, filterM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Maybe (MaybeT(..), runMaybeT)
@@ -58,7 +62,7 @@ readDirsAndFiles root = do
 
   dirs <- filterM (\n -> doesDirectoryExist $ root </> n) properNames
   files <- filterM (\n -> doesFileExist $ root </> n) properNames
-  
+
   return (dirs, files)
 
 pathWalkInternal :: MonadIO m => FilePath -> Callback m WalkStatus -> m (Maybe ())
@@ -115,6 +119,5 @@ pathWalkLazy root = liftIO $ unsafeInterleaveIO $ do
     allsubs <- forM dirs $ \dir -> do
       pathWalkLazy $ root </> dir
     return $ concat allsubs
-    
-  return $ (root, dirs, files) : next
 
+  return $ (root, dirs, files) : next
